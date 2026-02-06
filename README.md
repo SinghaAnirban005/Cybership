@@ -1,96 +1,111 @@
 # Getting Started
 
-- Install dependencies
-```
-pnpm install
-```
+## Setup
 
-- Copy env variable
-```
-cp .env.example .env
-```
+1. **Install dependencies**
 
-- Run Tests
-```
-pnpm test
-```
+   ```bash
+   pnpm install
+   ```
+
+2. **Copy environment variables**
+
+   ```bash
+   cp .env.example .env
+   ```
+
+3. **Run tests**
+
+   ```bash
+   pnpm test
+   ```
+
+---
 
 # Design Decisions
 
 ## Architecture
 
-1. Domain Driven Design
-      
-      We separate the domain models from carrier specific implementations.
-      
-      Rationale:
-      - Carrier Independence: Business logic doesn't depend on UPS, FedEx, or any specific carrier's API structure
-      - Adding new carriers doesn't require changing existing code
+### 1. Domain Driven Design
 
+We separate **domain models** from **carrier specific implementations**.
 
-2. Layered Architecture
+**Rationale**
 
+* **Carrier independence**: Business logic does not depend on UPS, FedEx, or any carrier specific API structure
+* **Extensibility**: Adding a new carrier does not require changes to existing domain code
 
-<img width="776" height="574" alt="Screenshot from 2026-02-06 20-23-23" src="https://github.com/user-attachments/assets/6cd48224-724a-4943-a2e2-164885d4b704" />
+---
 
+### 2. Layered Architecture
 
-We organize code into distinct layers with clear dependencies.
+We organize the codebase into distinct layers with clear dependency rules.
 
-Rationale:
-- Each layer has a single, well-defined responsibility
-- Inner layers (domain) don't depend on outer layers (infrastructure)
-- Can test each layer independently with mocks
+![Layered architecture diagram](https://github.com/user-attachments/assets/6cd48224-724a-4943-a2e2-164885d4b704)
 
+**Rationale**
 
+* Each layer has a single, well defined responsibility
+* Inner layers (domain) do **not** depend on outer layers (infrastructure)
+* Each layer can be tested independently using mocks
 
+---
 
-3. Factory Pattern for carrier creation
-      
-      We use a factory to instantiate carriers instead of direct construction.
-      
-      Rationale:
-      - Single place to register all supported carriers
-      - Factory manages carrier dependencies (config, HTTP client)
+### 3. Factory Pattern for Carrier Creation
 
+We use a factory to instantiate carriers instead of constructing them directly.
 
-4. Type Safety with TypeScript + Zod
+**Rationale**
 
-      We use TypeScript for compile time safety and Zod for runtime validation.
+* Centralized registration of all supported carriers
+* Factory manages carrier dependencies (configuration, HTTP client, etc.)
 
+---
 
-5. OAuth Token Management
-      
-      We implement intelligent token caching with automatic refresh.
+### 4. Type Safety with TypeScript + Zod
 
-```
+* **TypeScript** ensures compile‑time safety
+* **Zod** provides runtime validation for external inputs and API responses
+
+This combination prevents invalid data from propagating through the system.
+
+---
+
+### 5. OAuth Token Management
+
+We implement intelligent token caching with automatic refresh handling.
+
+```ts
 export class UpsAuthManager {
   private cachedToken: CachedToken | null = null;
-  private readonly tokenBuffer = 300000;
-  
+  private readonly tokenBuffer = 300000; // 5 minutes
+
   async getAccessToken(): Promise<string> {
     if (this.cachedToken && this.isTokenValid(this.cachedToken)) {
       return this.cachedToken.accessToken;
     }
-    
+
     return this.acquireToken();
   }
-  
+
   private isTokenValid(token: CachedToken): boolean {
     const now = new Date();
     const expiresWithBuffer = new Date(
       token.expiresAt.getTime() - this.tokenBuffer
     );
+
     return now < expiresWithBuffer;
   }
 }
 ```
 
+---
 
-6. HTTP Client with Retry Logic
+### 6. HTTP Client with Retry Logic
 
-      We implement automatic retry with exponential backoff for transient failures.
+We implement automatic retries with **exponential backoff** for transient failures.
 
-```
+```ts
 export class HttpClient {
   private async executeWithRetry<T>(
     operation: () => Promise<T>,
@@ -104,32 +119,39 @@ export class HttpClient {
         await this.sleep(delay);
         return this.executeWithRetry(operation, attempt + 1);
       }
+
       throw error;
     }
   }
-  
+
   private calculateBackoffDelay(attempt: number): number {
     const baseDelay = 1000;
     const maxDelay = 10000;
+
     const delay = Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
     return delay + Math.random() * 1000;
   }
 }
 ```
 
+---
 
-7. Structured Error Handling
-      
-      We created a custom CarrierIntegrationError class with typed error codes.
-      
-      Rationale:
-      - Callers can check error codes instead of parsing strings
+### 7. Structured Error Handling
 
-8. Mapper Pattern for Request/Response Translation
-      
-      We use mapper functions for transforming between domain and carrier types.
+We created a custom `CarrierIntegrationError` class with **typed error codes**.
 
-```
+**Rationale**
+
+* Callers can handle failures by checking error codes
+* Avoids brittle string based error parsing
+
+---
+
+### 8. Mapper Pattern for Request / Response Translation
+
+We use mapper functions for transforming between domain and carrier types.
+
+```ts
 export function mapRateRequestToUps(
   request: RateRequest,
   accountNumber: string
@@ -157,7 +179,7 @@ export function mapUpsResponseToRates(
   const ratedShipments = Array.isArray(upsResponse.RatedShipment)
     ? upsResponse.RatedShipment
     : [upsResponse.RatedShipment];
-    
+
   return {
     quotes: ratedShipments.map(shipment => ({
       carrier: 'UPS',
@@ -172,25 +194,29 @@ export function mapUpsResponseToRates(
 }
 ```
 
+---
 
-10. Integration Testing with Stubbed Responses
+### 9. Integration Testing with Stubbed Responses
 
-      We use nock to stub HTTP responses based on real API documentation.
-      
-      Rationale:
-      - Tests work without UPS credentials
-      - No network calls and tests run in milliseconds
+We use **nock** to stub HTTP responses based on official API documentation.
 
+**Rationale**
 
-11. Immutability and Functional Patterns
+* Tests run without real UPS credentials
+* No network calls
+* Test suite executes in milliseconds
 
-      We favor immutable data structures and pure functions where possible.
+---
 
-```
+### 10. Immutability and Functional Patterns
+
+We favor immutable data structures and minimize shared mutable state.
+
+```ts
 export class UpsCarrier {
   readonly name = 'ups';
   private readonly authManager: UpsAuthManager;
-  
+
   constructor(
     private readonly config: Config,
     private readonly httpClient: HttpClient
@@ -198,9 +224,17 @@ export class UpsCarrier {
 }
 ```
 
-## What would be added next
-Given more time I would add
-- Integrate FedEx to demonstrate multi carrier support
-- Integrate Redis for rate caching
-- Build a CLI tool
-- Cover more tests: Edge cases, concurrent requests, stress tests
+---
+
+## What Would Be Added Next
+
+Given more time, I would:
+
+* Integrate **FedEx** to demonstrate true multi carrier support
+* Add **Redis** for rate caching
+* Build a **CLI tool** for local usage and debugging
+* Expand test coverage:
+
+  * Edge cases
+  * Concurrent requests
+  * Stress and load tests
