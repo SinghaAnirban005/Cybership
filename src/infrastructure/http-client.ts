@@ -7,9 +7,6 @@ import axios, {
 import { Config } from '../config/config';
 import { ErrorCode, CarrierIntegrationError } from '../domain/models';
 
-/**
- * HTTP client with built-in retry logic, timeout handling, and error transformation
- */
 export class HttpClient {
   private readonly client: AxiosInstance;
   private readonly maxRetries: number;
