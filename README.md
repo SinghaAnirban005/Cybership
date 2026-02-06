@@ -20,12 +20,12 @@ pnpm test
 ## Architecture
 
 1. Domain Driven Design
-
-We separate the domain models from carrier specific implementations.
-
-Rationale:
-- Carrier Independence: Business logic doesn't depend on UPS, FedEx, or any specific carrier's API structure
-- Adding new carriers doesn't require changing existing code
+      
+      We separate the domain models from carrier specific implementations.
+      
+      Rationale:
+      - Carrier Independence: Business logic doesn't depend on UPS, FedEx, or any specific carrier's API structure
+      - Adding new carriers doesn't require changing existing code
 
 
 2. Layered Architecture
@@ -45,22 +45,22 @@ Rationale:
 
 
 3. Factory Pattern for carrier creation
-
-We use a factory to instantiate carriers instead of direct construction.
-
-Rationale:
-- Single place to register all supported carriers
-- Factory manages carrier dependencies (config, HTTP client)
+      
+      We use a factory to instantiate carriers instead of direct construction.
+      
+      Rationale:
+      - Single place to register all supported carriers
+      - Factory manages carrier dependencies (config, HTTP client)
 
 
 4. Type Safety with TypeScript + Zod
 
-We use TypeScript for compile time safety and Zod for runtime validation.
+      We use TypeScript for compile time safety and Zod for runtime validation.
 
 
 5. OAuth Token Management
-
-We implement intelligent token caching with automatic refresh.
+      
+      We implement intelligent token caching with automatic refresh.
 
 ```
 export class UpsAuthManager {
@@ -88,7 +88,7 @@ export class UpsAuthManager {
 
 6. HTTP Client with Retry Logic
 
-We implement automatic retry with exponential backoff for transient failures.
+      We implement automatic retry with exponential backoff for transient failures.
 
 ```
 export class HttpClient {
@@ -119,15 +119,15 @@ export class HttpClient {
 
 
 7. Structured Error Handling
-
-We created a custom CarrierIntegrationError class with typed error codes.
-
-Rationale:
-- Callers can check error codes instead of parsing strings
+      
+      We created a custom CarrierIntegrationError class with typed error codes.
+      
+      Rationale:
+      - Callers can check error codes instead of parsing strings
 
 8. Mapper Pattern for Request/Response Translation
-
-We use mapper functions for transforming between domain and carrier types.
+      
+      We use mapper functions for transforming between domain and carrier types.
 
 ```
 export function mapRateRequestToUps(
@@ -175,16 +175,16 @@ export function mapUpsResponseToRates(
 
 10. Integration Testing with Stubbed Responses
 
-We use nock to stub HTTP responses based on real API documentation.
-
-Rationale:
-- Tests work without UPS credentials
-- No network calls and tests run in milliseconds
+      We use nock to stub HTTP responses based on real API documentation.
+      
+      Rationale:
+      - Tests work without UPS credentials
+      - No network calls and tests run in milliseconds
 
 
 11. Immutability and Functional Patterns
 
-We favor immutable data structures and pure functions where possible.
+      We favor immutable data structures and pure functions where possible.
 
 ```
 export class UpsCarrier {
