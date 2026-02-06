@@ -5,7 +5,7 @@
 1. **Install dependencies**
 
    ```bash
-   pnpm install
+   pnpm install (pnpm v10.28.2)
    ```
 
 2. **Copy environment variables**
