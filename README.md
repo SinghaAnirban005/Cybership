@@ -30,12 +30,18 @@ Rationale:
 
 2. Layered Architecture
 
+
+<img width="776" height="574" alt="Screenshot from 2026-02-06 20-23-23" src="https://github.com/user-attachments/assets/6cd48224-724a-4943-a2e2-164885d4b704" />
+
+
 We organize code into distinct layers with clear dependencies.
 
 Rationale:
 - Each layer has a single, well-defined responsibility
 - Inner layers (domain) don't depend on outer layers (infrastructure)
 - Can test each layer independently with mocks
+
+
 
 
 3. Factory Pattern for carrier creation
